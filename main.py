@@ -45,7 +45,7 @@ def scrape_page(driver, page_number: int) -> Dict[str, List[str]]:
     return data
 
 
-def scrape_all_pages(start: int, end: int) -> Dict[str, List[str]]:
+def scrape_all_pages(start: int, end: int) -> Dict[str, set]:
     """
     Scrape all pages in a range for region and postcode data.
 
@@ -54,7 +54,7 @@ def scrape_all_pages(start: int, end: int) -> Dict[str, List[str]]:
         end (int): The last page to scrape.
 
     Returns:
-        Dict[str, List[str]]: A dictionary where the keys are regions and the values are lists of postcodes.
+        Dict[str, set]: A dictionary where the keys are regions and the values are sets of unique postcodes.
     """
     all_data = {}
 
@@ -70,22 +70,26 @@ def scrape_all_pages(start: int, end: int) -> Dict[str, List[str]]:
 
         # Merge the data from this page into the overall data
         for region, postcodes in data.items():
+            # Convert list to set to ensure uniqueness
+            postcodes_set = set(postcodes)
+            # If the region is already in the dictionary, union the sets
+            # Otherwise, add the set to the dictionary for the region
             if region in all_data:
-                all_data[region].extend(postcodes)
+                all_data[region] = all_data[region].union(postcodes_set)
             else:
-                all_data[region] = postcodes
+                all_data[region] = postcodes_set
 
     driver.quit()
 
     return all_data
 
 
-def save_to_csv(data: Dict[str, List[str]], filename: str) -> None:
+def save_to_csv(data: Dict[str, set], filename: str) -> None:
     """
     Save region and postcode data to a CSV file.
 
     Args:
-        data (Dict[str, List[str]]): The data to save, where the keys are regions and the values are lists of postcodes.
+        data (Dict[str, set]): The data to save, where the keys are regions and the values are sets of unique postcodes.
         filename (str): The name of the file to save the data to.
     """
     with open(filename, "w", newline="") as file:
